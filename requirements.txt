@@ -3,3 +3,39 @@ charset-normalizer==3.4.3
 idna==3.10
 requests==2.32.5
 urllib3==2.5.0
+
+
+# Python client for Ollama API
+ollama 
+
+# ChromaDB - the open-source embedding database
+# https://github.com/chroma-core/chroma
+chromadb 
+
+# Lib to work with PDF files and extract info from them
+pdfplumber 
+
+# LangChain, a framework to build applications with LLMs and related libraries
+# https://python.langchain.com/docs/introduction/
+langchain
+langchain-core
+langchain-ollama
+langchain_text_splitters
+
+# Extension providing third-party integrations for LangChain
+langchain-community
+
+# Library for working with unstructured data
+# It could be necessary to install additional OS lib as poppler. 
+# In Ubuntu: $ sudo apt install poppler-utils
+unstructured
+unstructured[all-docs]
+
+# Fast embedding library
+fastembed
+
+# Sentence Transformers - for generating embeddings and working with transformer models
+sentence-transformers
+
+# Text to speech library
+elevenlabs
