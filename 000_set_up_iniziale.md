@@ -116,12 +116,25 @@ Non funziona molto bene con "phi3".
 
 
 # Client
-Visto che è un server, esistono vari client web open source.
 
-https://github.com/open-webui/open-webui (forse un poco pesante)
+Visto che è un server, esistono vari client web open source.
+https://github.com/ollama/ollama?tab=readme-ov-file#community-integrations
+
+## Hollama
+
+    https://hollama.fernando.is
+
+    sudo systemctl stop ollama    
+    OLLAMA_ORIGINS=chrome-extension://*,moz-extension://*,safari-web-extension://*,https://hollama.fernando.is ollama serve
+
+## Open Web Ui
+
+veramente massivo, ha Gb e Gb di librerie
+
+https://github.com/open-webui/open-webui 
 
 uv venv
 uv pip install open-webui
 open-webui serve
 
-veramente massivo
+
