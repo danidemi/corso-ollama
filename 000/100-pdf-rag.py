@@ -1,5 +1,7 @@
 ## 1. Ingest PDF Files
 """
+ollama pull nomic-embed-text
+
 This script implements a simple Retrieval-Augmented Generation (RAG) pipeline for PDF documents using LangChain and Ollama.
 It performs the following steps:
 
@@ -52,10 +54,8 @@ from langchain_ollama import OllamaEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 
-# Split and chunk
-# RecursiveCharacterTextSplitter è uno splitter avanzato che suddivide il testo in chunk di dimensione specificata (chunk_size),
-# mantenendo una sovrapposizione (chunk_overlap) tra i chunk per preservare il contesto tra le parti adiacenti.
-# Utilizza una strategia ricorsiva per evitare di spezzare frasi o paragrafi in modo innaturale, migliorando la qualità dei chunk per l'embedding.
+# # ===== Split and chunk ===== #
+# RecursiveCharacterTextSplitter suddivide il testo in chunk sovrapposti, preservando il contesto e la coerenza delle frasi.
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=300)
 chunks = text_splitter.split_documents(data)
 print("done splitting....")
@@ -66,68 +66,86 @@ for i in range(min(10, len(chunks))):
     print(f"Example chunk: {chunks[random_index]}")
 
 # # ===== Add to vector database ===
-# import ollama
+import ollama
+print("Aggiungendo documenti al vector database....")
+# Chroma is a class from langchain_community.vectorstores that provides a simple interface to create and manage a Chroma vector database.
+vector_db = Chroma.from_documents(
+    # I documenti da indicizzare
+    documents=chunks,
+    # La funzione di embedding da utilizzare per generare i vettori. 
+    # Ogni documento viene trasformato in un vettore numerico tramite questa funzione.
+    embedding=OllamaEmbeddings(model="nomic-embed-text"),
+    # il nome della collezione in cui salvare i vettori.
+    collection_name="simple-rag",
+)
+print("Aggiunta completata.")
 
-# ollama.pull("nomic-embed-text")
 
-# vector_db = Chroma.from_documents(
-#     documents=chunks,
-#     embedding=OllamaEmbeddings(model="nomic-embed-text"),
-#     collection_name="simple-rag",
-# )
-# print("done adding to vector database....")
+## === Retrieval ===
+from langchain.prompts import ChatPromptTemplate, PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
+from langchain_ollama import ChatOllama
 
-# ## === Retrieval ===
-# from langchain.prompts import ChatPromptTemplate, PromptTemplate
-# from langchain_core.output_parsers import StrOutputParser
-
-# from langchain_ollama import ChatOllama
-
-# from langchain_core.runnables import RunnablePassthrough
-# from langchain.retrievers.multi_query import MultiQueryRetriever
+from langchain_core.runnables import RunnablePassthrough
+from langchain.retrievers.multi_query import MultiQueryRetriever
 
 # # set up our model to use
-# llm = ChatOllama(model=model)
-
-# # a simple technique to generate multiple questions from a single question and then retrieve documents
-# # based on those questions, getting the best of both worlds.
-# QUERY_PROMPT = PromptTemplate(
-#     input_variables=["question"],
-#     template="""You are an AI language model assistant. Your task is to generate five
-#     different versions of the given user question to retrieve relevant documents from
-#     a vector database. By generating multiple perspectives on the user question, your
-#     goal is to help the user overcome some of the limitations of the distance-based
-#     similarity search. Provide these alternative questions separated by newlines.
-#     Original question: {question}""",
-# )
-
-# retriever = MultiQueryRetriever.from_llm(
-#     vector_db.as_retriever(), llm, prompt=QUERY_PROMPT
-# )
+llm = ChatOllama(model=model)
 
 
-# # RAG prompt
-# template = """Answer the question based ONLY on the following context:
-# {context}
-# Question: {question}
-# """
+# # ===== MultiQueryRetriever =====
+# MultiQueryRetriever is a class from langchain.retrievers.multi_query that allows you to create a retriever
+# that generates multiple queries from a single user question using a language model (LLM).
+# This is useful for improving the retrieval of relevant documents from a vector database by capturing different aspects of the user's intent.
+# The MultiQueryRetriever works by taking the user's original question and using the LLM to generate several alternative questions.
+# These alternative questions are then used to query the vector database, and the results are aggregated to provide a more comprehensive set of relevant documents.
 
-# prompt = ChatPromptTemplate.from_template(template)
+# a simple technique to generate multiple questions from a single question and then retrieve documents
+# based on those questions, getting the best of both worlds.
+QUERY_PROMPT = PromptTemplate(
+    input_variables=["question"],
+    template="""You are an AI language model assistant. Your task is to generate five
+    different versions of the given user question to retrieve relevant documents from
+    a vector database. By generating multiple perspectives on the user question, your
+    goal is to help the user overcome some of the limitations of the distance-based
+    similarity search. Provide these alternative questions separated by newlines.
+    Original question: {question}""",
+)
+
+retriever = MultiQueryRetriever.from_llm(
+    vector_db.as_retriever(), 
+    llm, 
+    prompt=QUERY_PROMPT
+)
 
 
-# chain = (
-#     {"context": retriever, "question": RunnablePassthrough()}
-#     | prompt
-#     | llm
-#     | StrOutputParser()
-# )
+# RAG prompt
+template = """Answer the question based ONLY on the following context:
+{context}
+Question: {question}
+"""
+
+prompt = ChatPromptTemplate.from_template(template)
+print(f"Using template {template}")
 
 
-# # res = chain.invoke(input=("what is the document about?",))
-# # res = chain.invoke(
-# #     input=("what are the main points as a business owner I should be aware of?",)
-# # )
-# res = chain.invoke(input=("how to report BOI?",))
+chain = (
+    {"context": retriever, "question": RunnablePassthrough()}
+    | prompt
+    | llm
+    | StrOutputParser()
+)
 
-# print(res)
+def question_and_answer(question: str, chain) -> str:
+    print(f"Domanda: {question}")
+    res = chain.invoke(input=(question,))
+    print(f"Risposta: {res}")    
+
+question = "di cosa parla il documento?"
+res = chain.invoke(input=(question,))
+print(f"Domanda: {question}")
+print(f"Risposta: {res}")
+question_and_answer("di cosa tratta il documento?", chain)
+question_and_answer("quali sono le istruzioni per la compilazione del quadro RW?", chain)
+question_and_answer("ho un consorte e dei figli in età scolare. Quali sono i punti di attenzione per me?", chain)
