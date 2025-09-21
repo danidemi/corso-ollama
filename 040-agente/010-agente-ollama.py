@@ -3,7 +3,7 @@ import ollama
 response = ollama.chat(
     model='llama3.2:3b',
     messages=[{'role': 'user', 'content':
-        'What is the weather in Toronto?'}],
+        'What is the weather in Paris?'}],
 
 		# provide a weather checking tool to the model
     tools=[{

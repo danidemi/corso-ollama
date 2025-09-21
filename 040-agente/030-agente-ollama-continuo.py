@@ -1,5 +1,5 @@
 import ollama
-
+ 
 tools=[{
   'type': 'function',
   'function': {
@@ -20,14 +20,17 @@ tools=[{
 
 def get_current_weather(city: str) -> str:
     """
-    Simula il recupero delle informazioni meteo per una città specifica.
-    In un'applicazione reale, questa funzione potrebbe fare una chiamata API a un servizio meteo.
+    Get the current weather for a city.
     """
+
+    weather = ["sunny", "rainy", "cloudy", "windy", "snowy"][hash(city) % 5]
+    temperature = -5 + (hash(city) % 40)
+
     # Simuliamo una risposta meteo
-    return f"The current weather in {city} is sunny with a temperature of 25°C."
+    return f"The current weather in {city} is {weather} with a temperature of {temperature}°C."
 
 
-
+model = 'llama3.2:3b'
 user_input = None
 messages = []
 while True:
@@ -38,27 +41,30 @@ while True:
         break
 
     # aggiungiamo il messaggio dell'utente alla lista dei messaggi che saranno inviati
-    messages.append( [{'role': 'user', 'content': user_input}] )
+    messages.append( {'role': 'user', 'content': user_input} )
 
     print("=> LLM")
     for message in messages:
         print(f"   {message}")
 
-    
-    model = 'llama3.2:3b'
-    response = ollama.chat(
-        tools=tools,
+
+
+    response: ollama.ChatResponse = ollama.chat(
         model=model,
-        messages=messages
+        messages=messages,        
+        tools=[get_current_weather],
     )
 
     print("<= LLM")
-    print(f"   {response['message']}")    
+    print(f"   {response['message']}")   
+
+    messages.append(response['message']) 
 
 
     while ('tool_calls' in response['message']):
         # iteriamo sulle chiamate agli strumenti (tool calls)
         for tool_call in response['message']['tool_calls']:
+            
             print(f"Chiamata allo strumento: {tool_call}")
             tool_name = tool_call['function']['name']
             tool_args = tool_call['function']['arguments']
@@ -69,19 +75,22 @@ while True:
             print("<= Tool")
             print(f"   {tool_result}")
 
-            messages.append({'role': 'tool', 'content': tool_result})
+            messages.append({
+                'role': 'tool', 
+                'tool_name': tool_name,
+                'content': tool_result})
 
         print("=> LLM")
         for message in messages:
             print(f"   {message}")            
 
-        response = ollama.chat(
+        response : ollama.ChatResponse = ollama.chat(
             tools=tools,
             model=model,
             messages=messages
         )            
 
         print("<= LLM")
-        print(f"   {response['message']}")         
+        print(f"   {response.message}")         
 
 
