@@ -31,11 +31,13 @@ def get_current_weather(city: str) -> str:
 
 
 model = 'llama3.2:3b'
+#model = 'alibayram/smollm3'
 user_input = None
 messages = []
 while True:
     
     # controlliamo se l'utente vuole uscire
+    # esempio: I have a sister living in Florence, Italy. Do you think she is cold today?
     user_input = input("Prompt (o exit): ")
     if user_input == "exit":
         break

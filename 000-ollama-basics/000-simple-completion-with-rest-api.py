@@ -7,11 +7,12 @@ import json
 
 # Documentazione completa:
 # https://github.com/ollama/ollama/blob/main/docs/api.md#generate-a-completion
+# llama3.2:3b, alibayram/smollm3, phi3
 response = requests.post(
     "http://localhost:11434/api/generate", 
     json = {
-        "model": "phi3",
-        "prompt": "tell me a very short story and make it funny. No more than 20 words.",
+        "model": "llama3.2:3b",
+        "prompt": "Explain me the history of Italy in no more than 50 words.",
     }, 
     stream=False # Se la risposta deve essere in streaming o no
 )  
@@ -21,7 +22,7 @@ response = requests.post(
 if response.status_code == 200:
 
     # Se stampare il dettaglio JSON restituito
-    print_json_response = True    
+    print_json_response = False    
     for line in response.iter_lines():
         if line:
             decoded_line = line.decode("utf-8")

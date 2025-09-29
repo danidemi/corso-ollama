@@ -5,12 +5,19 @@ import ollama
 
 llms = ollama.list()
 print(f"Modelli disponibili: {[m.model for m in llms.models]}")
-print(ollama.show(llms.models[0].model))
+
+print(f"\n\n {ollama.show(llms.models[0].model)}")
 
 # ollama.pull("modelname")
 
-print(ollama.generate(
+generated = ollama.generate(
     model="phi3",
     prompt="why is the sky blue?",
-).response)
+).response
 
+print(f"\n\n{generated}")
+
+embed = ollama.embed(
+    model="phi3",
+    input="Hello, world!")
+print(f"\n\n{embed}...")  # Stampa i primi 10 valori dell'embedding

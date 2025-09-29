@@ -10,9 +10,15 @@ runnable = RunnableLambda(lambda x: f"ciao {x}")
 result = runnable.invoke(5)
 print(result)
 
+
+
+
 # eseguirlo sincronicamente con un batch di input, restituisce un batch di risultati
 result = runnable.batch(["mario", "luigi", "pippo"])
 print(result)
+
+
+
 
 # composizione in sequenza
 # il tipo di input della catena deve corrispondere all tipo di input del primo runnable
@@ -22,6 +28,9 @@ incrementa = RunnableLambda(lambda x: x + 1)
 triplica = RunnableLambda(lambda y: y * 3)
 sequenza = incrementa | triplica
 print(sequenza.invoke(3)) 
+
+
+
 
 # composizione in parallelo
 # il tipo di input alla chain deve corrispondere agli input dei singoli runnable
